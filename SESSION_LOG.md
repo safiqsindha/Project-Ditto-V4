@@ -272,15 +272,51 @@ Possible paths forward (for author decision, not pre-committed):
 | `results/pilot_scored.json` | new (gitignored) |
 | `SESSION_LOG.md` | this entry |
 
+### Session 2 addendum — SPEC_v1.1 Amendment 1 and Gate 2 re-evaluation
+
+**After lead author review of the Gate 2 FAIL, author approved Option 2:**
+add `ResourceBudget` to `ACTIONABLE_TYPES` via a SPEC_v1.1 supplement.
+
+Actions taken per BUILD_PLAN methodology change protocol:
+1. Drafted `SPEC_v1.1.md` documenting Amendment 1 with rationale.
+2. Updated `src/v4_scorer_config.py`: `V4_ACTIONABLE_TYPES` expanded from
+   5-type to 6-type set (added `"ResourceBudget"`).
+3. Updated `CLAUDE.md` §"v1-domain adaptations" to reflect 6-type set.
+4. Re-scored pilot with 6-type set.
+
+**Revised Gate 2 results with 6-type ACTIONABLE_TYPES:**
+
+| Layer | n_pairs | real_rate | shuffled_rate | gap | p_value |
+|---|---|---|---|---|---|
+| Layer 1 actionable | 140 | 0.2143 | 0.1929 | +0.0214 | 0.728 |
+
+Both-actionable retention: 140/140 = **100%** (all 6 types cover full v1 distribution).
+Outcome tier: `weak_mixed` (n=50 pilot; not an effect-size test).
+
+**Revised Gate 2 status: PASS.**
+
+| Criterion | Status | Details |
+|---|---|---|
+| 50 chains load, no schema errors | PASS | All 50 loaded cleanly |
+| Reference distribution ≥ 90% coverage | PASS | 1.000 at `vs_unit_a` default |
+| 200 batch calls succeed | PASS | 200/200, 0 errors |
+| Responses parse; non-zero match rate | PASS | real_rate=0.214, shuffled_rate=0.193 |
+| Both-actionable retention ≥ 50% | **PASS** | **100% (140/140) with 6-type set** |
+| Pilot scoring produces valid JSON | PASS | `results/pilot_scored.json` well-formed |
+
+Note: `SPEC_v1.1.md` records lead author sign-off (2026-04-26). Co-author
+(Myriam) sign-off is pending; should be obtained before Session 3 proceeds.
+
 ### Blockers or open questions
 
-- **Gate 2 FAIL on both-actionable retention.** Root cause identified (ResourceBudget
-  density in v1). Three paths forward documented above. Author review required.
-- Next session (Session 3) cannot start without explicit author approval.
+- **Co-author (Myriam) sign-off on SPEC_v1.1.md Amendment 1 is pending.**
+  The amendment is documented and rationale is clear; sign-off is a process
+  step, not a technical blocker.
+- Session 3 should not start without co-author sign-off on the amendment.
 
 ### Next session (Session 3) planned tasks
 
-*(Pending author approval. Planned tasks assuming path 1 — proceed without SPEC change.)*
+*(After co-author sign-off on SPEC_v1.1 Amendment 1.)*
 
 1. Confirm Gate 3 pre-flight: pilot approved, chain selection unchanged
 2. Build full reference distribution (1,200 chains) at `vs_unit_a` default

@@ -38,7 +38,7 @@ data/
 src/
   v4_reference_builder.py  wraps v3 reference builder; configurable phase default
   v4_runner.py             wraps v3 batch runner; pokemon source, Haiku model
-  v4_scorer_config.py      wraps v3 scorer; 5-type ACTIONABLE_TYPES, divisor=1
+  v4_scorer_config.py      wraps v3 scorer; 6-type ACTIONABLE_TYPES (SPEC_v1.1), divisor=1
 
 scripts/
   generate_selection.py    one-shot seed-42 chain selection (run once, committed)
@@ -92,16 +92,23 @@ requirement. Documented here and in SESSION_LOG.md Session 1.
    `v4_reference_builder.py` exposes `--scan` to test candidates; the best
    default is recorded in `v4_pilot_decisions.json`.
 
-2. **`ACTIONABLE_TYPES`** — 5-type set: `ToolAvailability`, `SubGoalTransition`,
-   `InformationState`, `CoordinationDependency`, `OptimizationCriterion`.
-   `InformationState` included because v1's Pokémon domain has meaningful
-   hidden information (opponent Pokémon hidden until revealed).
-   `ResourceBudget` excluded (non-actionable material counter).
+2. **`ACTIONABLE_TYPES`** — 6-type set per **`SPEC_v1.1.md` Amendment 1**
+   (Session 2, 2026-04-26):
+   `ToolAvailability`, `SubGoalTransition`, `InformationState`,
+   `CoordinationDependency`, `OptimizationCriterion`, `ResourceBudget`.
 
-   Note: `CoordinationDependency` and `OptimizationCriterion` may have zero
-   occurrences in v1 chains (observed during Session 1 scoping). Their
-   inclusion in ACTIONABLE_TYPES is pre-registered per SPEC.md and cannot
-   be changed.
+   `InformationState` included: Pokémon battles have meaningful hidden
+   information (opponent Pokémon hidden until revealed).
+   `ResourceBudget` added via SPEC_v1.1 Amendment 1: HP/PP in the Pokémon
+   domain directly constrains move selection and survival decisions —
+   categorically more actionable than chess material counts. Pilot Gate 2
+   revealed 46% of chains have ResourceBudget at cutoff_k; both-actionable
+   retention was 30.7% without it (below 50% Gate 2 threshold).
+
+   Note: `CoordinationDependency` and `OptimizationCriterion` appear to be
+   absent from v1 chains (zero occurrences in pilot). Their presence in
+   ACTIONABLE_TYPES has no practical effect but is retained for consistency
+   with the 6-type set definition.
 
 ---
 

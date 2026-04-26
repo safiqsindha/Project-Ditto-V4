@@ -5,8 +5,9 @@ Wraps v3's scorer with the two v1-domain adaptations pre-committed in SPEC.md:
 
   1. SOURCES = ["pokemon"]  (single cell, single source)
   2. ACTIONABLE_TYPES = {ToolAvailability, SubGoalTransition, InformationState,
-                         CoordinationDependency, OptimizationCriterion}
-     (5-type set; InformationState re-included for v1's hidden-info domain)
+                         CoordinationDependency, OptimizationCriterion, ResourceBudget}
+     (6-type set per SPEC_v1.1 Amendment 1; ResourceBudget added for v1's
+     Pokémon domain where HP/PP directly constrains move selection)
   3. Bonferroni divisor = 1  (single cell; no correction applied)
 
 v3 code is NOT modified. Module-level constants are patched before calling
@@ -78,15 +79,17 @@ _v3_scorer = _load_v3("scorer")
 
 V4_SOURCES: list[str] = ["pokemon"]
 
-# v1-domain actionable types (SPEC.md §Reference Distribution Build)
-# InformationState included — Pokémon battles have meaningful hidden information.
-# ResourceBudget excluded — non-actionable material counter, same as v2/v3.
+# v1-domain actionable types (SPEC_v1.1.md Amendment 1)
+# ResourceBudget included — HP/PP in Pokémon directly constrains move selection
+# and survival decisions (unlike chess material count, which is strategic context).
+# InformationState included — hidden opponent info affects strategic inference.
 V4_ACTIONABLE_TYPES: set[str] = {
     "ToolAvailability",
     "SubGoalTransition",
     "InformationState",
     "CoordinationDependency",
     "OptimizationCriterion",
+    "ResourceBudget",
 }
 
 # Bonferroni divisor = 1 (single analysis, single cell — no correction applied)
