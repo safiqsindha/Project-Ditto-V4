@@ -59,15 +59,12 @@ import anthropic  # noqa: E402
 # any module that imports it is exec'd).
 _v3_normalize = _load_v3("normalize")
 _v3_prompt = _load_v3("prompt_builder")
-_load_v3("translation")       # shuffler imports src.translation
-_v3_shuffler = _load_v3("shuffler")
 _v3_runner = _load_v3("runner")
 
 PROMPT_VERSION = _v3_prompt.PROMPT_VERSION
 SYSTEM_PROMPT = _v3_prompt.SYSTEM_PROMPT
 build_prompt = _v3_prompt.build_prompt
 cutoff_rendered = _v3_prompt.cutoff_rendered
-shuffle_chain = _v3_shuffler.shuffle_chain
 
 # ---------------------------------------------------------------------------
 # v4 constants
@@ -193,12 +190,24 @@ def run_batch(
     all_requests: dict[str, list] = {cfg["label"]: [] for cfg in configs}
     chain_meta: dict[str, dict] = {}
 
+    # Path to v1's pre-rendered shuffled chains (set up by scripts/setup_v4_chains.py).
+    # v3's shuffler does NOT regenerate the `rendered` field, so on-the-fly shuffles
+    # would submit the real chain's rendering as the "shuffled" prompt. v1's pre-gen
+    # shuffles use the same seeds (42, 1337, 7919) and have constraints identical to
+    # what shuffle_chain() produces, but with correctly-rendered prompt text.
+    shuffled_chains_dir = pathlib.Path("data/v4_pokemon_chains/shuffled/pokemon")
+
+    def _load_v1_shuffled(real_cid: str, shuf_seed: int) -> dict:
+        path = shuffled_chains_dir / f"{real_cid}_shuffled_{shuf_seed}.jsonl"
+        with open(path) as f:
+            return json.loads(f.readline().strip())
+
     for chain in real_chains:
         real_cid = chain["chain_id"]
         real_msg, cutoff_k = _build_prompt_for_chain(chain)
 
-        # Generate shuffled variants
-        shuffled_chains = {seed: shuffle_chain(chain, seed) for seed in SHUFFLE_SEEDS}
+        # Load v1's pre-rendered shuffled variants (correct rendered field)
+        shuffled_chains = {seed: _load_v1_shuffled(real_cid, seed) for seed in SHUFFLE_SEEDS}
 
         for cfg in configs:
             temp = cfg["temperature"]

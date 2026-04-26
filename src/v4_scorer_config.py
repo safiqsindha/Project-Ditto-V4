@@ -120,6 +120,31 @@ def _make_patched_extract(default_phase: str):
     return original, _patched
 
 
+def _classify_outcome_tier_spec(gap: float, p_value: float) -> str:
+    """
+    SPEC.md-compliant tier classification (4 tiers).
+
+    v3's classify_outcome_tier has two divergences from SPEC.md:
+      1. Returns 'reversed' for any negative gap regardless of p-value;
+         SPEC requires p < 0.05.
+      2. Adds a 'weak_mixed' tier (gap >= 0.01 regardless of p) that is
+         not in SPEC.md.
+
+    SPEC.md tiers (CLAUDE.md quick reference):
+      strong_positive:    gap >= 0.08 AND p < 0.01
+      moderate_positive:  gap >= 0.05 AND p < 0.05
+      reversed:           gap < 0      AND p < 0.05
+      null:               anything else (gap not clearing 0.05, or p not clearing 0.05)
+    """
+    if gap >= 0.08 and p_value < 0.01:
+        return "strong_positive"
+    if gap >= 0.05 and p_value < 0.05:
+        return "moderate_positive"
+    if gap < 0 and p_value < 0.05:
+        return "reversed"
+    return "null"
+
+
 def score_v4(
     results_dir: Path,
     reference_path: Path,
@@ -128,18 +153,21 @@ def score_v4(
     """
     Score v4 results with the v1-domain configuration.
 
-    Patches v3's module-level SOURCES, ACTIONABLE_TYPES, and
-    extract_state_signature (to use vs_unit_a default instead of phase_opening),
-    calls score_all, then restores originals.
+    Patches v3's module-level SOURCES, ACTIONABLE_TYPES, extract_state_signature
+    (to use vs_unit_a default instead of phase_opening), and classify_outcome_tier
+    (to enforce SPEC.md's p<0.05 requirement on 'reversed' and remove the v3-only
+    'weak_mixed' tier that is not in SPEC.md). Restores originals after.
     """
     # Patch module constants
     orig_sources = _v3_scorer.SOURCES
     orig_actionable = _v3_scorer.ACTIONABLE_TYPES
+    orig_classify = _v3_scorer.classify_outcome_tier
     orig_extract, patched_extract = _make_patched_extract(V4_CURRENT_PHASE_DEFAULT)
 
     _v3_scorer.SOURCES = V4_SOURCES
     _v3_scorer.ACTIONABLE_TYPES = V4_ACTIONABLE_TYPES
     _v3_ref.extract_state_signature = patched_extract
+    _v3_scorer.classify_outcome_tier = _classify_outcome_tier_spec
 
     try:
         dist_paths = {"pokemon": reference_path}
@@ -157,6 +185,7 @@ def score_v4(
         _v3_scorer.SOURCES = orig_sources
         _v3_scorer.ACTIONABLE_TYPES = orig_actionable
         _v3_ref.extract_state_signature = orig_extract
+        _v3_scorer.classify_outcome_tier = orig_classify
 
     return scored
 
@@ -191,7 +220,8 @@ def validate_output(scored: dict, pilot: bool = False) -> list[str]:
             failures.append(f"{label}: missing 'outcome_tier'")
 
         tier = cell.get("outcome_tier")
-        valid_tiers = {"strong_positive", "moderate_positive", "weak_mixed", "null", "reversed"}
+        # SPEC.md tiers (4 only); v3's 'weak_mixed' is excluded — see _classify_outcome_tier_spec.
+        valid_tiers = {"strong_positive", "moderate_positive", "null", "reversed"}
         if tier and tier not in valid_tiers:
             failures.append(f"{label}: invalid outcome_tier {tier!r}")
 

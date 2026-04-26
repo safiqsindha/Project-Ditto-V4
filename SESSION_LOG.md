@@ -314,6 +314,83 @@ Note: `SPEC_v1.1.md` records lead author sign-off (2026-04-26). Co-author
   step, not a technical blocker.
 - Session 3 should not start without co-author sign-off on the amendment.
 
+### Session 2 addendum 2 — Bug scan and re-pilot (critical fixes)
+
+After the SPEC_v1.1 Amendment 1 was implemented, two bug scans were run
+(Sonnet, then Opus) over chain handling and scoring. Several real bugs
+were found, including one that invalidated the pilot's headline
+real-vs-shuffled comparison.
+
+**CRITICAL bug — shuffled prompts were not actually shuffled.**
+
+`vendor/v3/src/shuffler.py:shuffle_chain` does NOT regenerate the chain's
+`rendered` field — it shallow-copies the dict and reassigns `chain_id`,
+`match_id`, `constraints`, `active_pair_by_step` but inherits `rendered`
+from the real chain. v4_runner was generating shuffled variants on-the-fly
+with this shuffler, so all 3 shuffled prompts per real chain submitted to
+the API were textually IDENTICAL to the real prompt. The "shuffled rate"
+of 0.193 vs real 0.214 in the prior pilot reflects API non-determinism
+(plus the scorer reading correctly-shuffled constraints from v1's pre-gen
+chains for the target action), not a real shuffle effect.
+
+Verified: `Real == On-the-fly shuffle: True` for the rendered field across
+all 3 seeds.
+
+**Fix:** v4_runner now loads shuffled chains from v1's pre-generated
+shuffles at `data/v4_pokemon_chains/shuffled/pokemon/{cid}_shuffled_{seed}.jsonl`
+(symlinked by `setup_v4_chains.py`). Verified that v1's pre-gen has
+constraints IDENTICAL to what `shuffle_chain()` produces for all 3 seeds
+(42, 1337, 7919) — only the rendered field differs (v1 properly re-rendered).
+
+**HIGH bug — `classify_outcome_tier` violates SPEC.md.**
+
+v3's `classify_outcome_tier`:
+- Returns `"reversed"` for any negative gap regardless of p-value;
+  SPEC.md requires p < 0.05 for reversed (CLAUDE.md quick reference).
+- Returns `"weak_mixed"` for `0.01 ≤ gap < 0.05`; this tier is not in
+  SPEC.md (SPEC defines 4 tiers: strong/moderate/null/reversed).
+
+**Fix:** v4_scorer_config now monkey-patches `_v3_scorer.classify_outcome_tier`
+with `_classify_outcome_tier_spec`, a SPEC-compliant 4-tier classifier.
+`validate_output` updated to accept only the 4 SPEC tiers.
+
+**Re-pilot results with both fixes applied:**
+
+| Layer | n_pairs | real_rate | shuffled_rate | gap | p_value | tier |
+|---|---|---|---|---|---|---|
+| Layer 1 actionable | 140 | 0.2286 | 0.2000 | +0.0286 | 0.665 | null |
+
+Gap moved from 0.0214 (broken pilot) to 0.0286 (corrected pilot) — a real
+measurement of v3's methodology applied to actually-shuffled v1 chains.
+28/30 sampled real vs shuffled responses differ (vs essentially identical
+under the bug). p-value remains insignificant as expected at n=140; the
+full 1,200-chain run (~3,600 actionable pairs) will determine whether the
+gap clears the SPEC's pre-registered thresholds.
+
+**Pair independence note (B2 from Opus scan):** Each real chain pairs
+against 3 shuffled variants in the McNemar table (n=140 from 50 base
+chains × 3 shuffles minus 10 dropped). McNemar's independence assumption
+is technically violated, but this matches v1/v2/v3 methodology and is
+implicitly accepted by SPEC.md's pre-registration of v3's analysis. Not
+fixed; flagged for RESULTS.md §Limits.
+
+### Files created or modified (addendum 2)
+
+| File | Status |
+|---|---|
+| `src/v4_runner.py` | modified (load v1 pre-gen shuffles) |
+| `src/v4_scorer_config.py` | modified (SPEC-compliant tier classifier) |
+| `results/raw/pilot/primary/pokemon/*.json` | regenerated (200 files) |
+| `results/pilot_scored.json` | regenerated |
+
+### Revised Gate 2 status with corrected pilot: **PASS**
+
+All 6 criteria pass with the corrected pipeline. Lead author reviewed and
+authorized the rendered-field fix and the tier classifier fix as
+engineering corrections (not methodology changes — the SPEC's intent for
+shuffled chains and tier definitions was unchanged; the implementation
+was wrong).
+
 ### Next session (Session 3) planned tasks
 
 *(After co-author sign-off on SPEC_v1.1 Amendment 1.)*
