@@ -484,19 +484,21 @@ consistent with that interpretation.
 
 ### What this result establishes
 
-Per SPEC.md §"Pre-registered Interpretation Framework":
+Per SPEC.md §"Pre-registered Interpretation Framework" (verbatim, Primary:
+strong-positive case):
 
-> v3's pre-registered methodology — applied to chains constructed under v1's
-> organically-distributed pipeline, with the two pre-registered v1-domain
-> adaptations (phase-name default; actionable types include ResourceBudget and
-> InformationState) — produces a real-vs-shuffled detectability gap consistent
-> with, and stronger than, v1's own published Haiku result. This is consistent
-> with the interpretation that v3's reversed result on three of four formal-game
-> cells (with checkers_american under review per SPEC.md §"v3 status as of v4
-> pre-registration") reflects v3-specific chain-construction properties
-> (resource_side dominance and backoff differential per v3's SESSION_LOG;
-> further mechanisms if any) rather than a structural problem with the v3
-> statistical methodology.
+> v3's pre-registered methodology — applied to v1's chains under the two
+> pre-registered v1-domain adaptations — produces a stronger detectability
+> gap than v1's own pre-registered methodology produced on Haiku (v1
+> published Haiku gap 0.066 corrected). Strongest possible support for the
+> v4 hypothesis: the methodology is not the source of v3's reversed result.
+> v3's reversal is most parsimoniously explained by v3-specific
+> chain-construction properties.
+
+"v3's reversal" refers specifically to the three robust-reversed cells
+(chess_standard, chess960, draughts_intl); checkers_american is classified
+"methodology-dependent; under review" per SPEC.md §"v3 status as of v4
+pre-registration" and is not counted as a robust reversal.
 
 More precisely, the strong-positive result establishes:
 
