@@ -231,10 +231,10 @@ reduces to the top-k match indicator for v1's entity vocabulary.
 
 All three configs produce strong-positive signals with p≈0. The variance study
 is descriptive and not in the Bonferroni family per SPEC §Models and Evaluation
-Parameters. The T=0.5 configs show marginally higher gaps (+0.012 to +0.002
-above primary), consistent with higher-temperature outputs introducing more
-diverse responses that reduce shuffled match rates while preserving real-chain
-predictability.
+Parameters. The T=0.5 configs show marginally higher gaps (+0.003 to +0.012
+above primary); the difference is small and could reflect noise at this n.
+The outcome tier (strong_positive) is consistent across all three configs by
+wide margins.
 
 ---
 
@@ -367,19 +367,28 @@ could make the point estimate higher-variance). No causal claim is made.
 v3 Phase 1 Layer 1 actionable gaps (Bonferroni divisor=4,
 from `phase1_v31_scored_full.json`):
 
-| v3 cell | n_actionable | gap | chi2 | outcome_tier |
-|---|---|---|---|---|
-| chess_standard | 1,288 | **−0.187** | 186.4 | reversed |
-| chess960 | 1,250 | **−0.231** | 266.7 | reversed |
-| checkers_american | 1,496 | **−0.115** | 69.6 | reversed |
-| draughts_intl | 1,533 | **−0.155** | 163.3 | reversed |
-| **v4 pokemon (this work)** | **3,600** | **+0.131** | 167.3 | **strong_positive** |
+| v3 cell | n_actionable | gap (filtered) | gap (unfiltered) | chi2 | outcome_tier |
+|---|---|---|---|---|---|
+| chess_standard | 1,288 | **−0.187** | −0.043 | 186.4 | reversed |
+| chess960 | 1,250 | **−0.231** | −0.038 | 266.7 | reversed |
+| checkers_american | 1,496 | **−0.115** | +0.039 | 69.6 | reversed (under review)† |
+| draughts_intl | 1,533 | **−0.155** | −0.016 | 163.3 | reversed |
+| **v4 pokemon (this work)** | **3,600** | **+0.131** | +0.131 | 167.3 | **strong_positive** |
 
-The contrast is stark. All four v3 cells produced reversed outcomes
-(negative gaps, statistically significant). v4's pokemon cell produces
-a strong-positive gap of nearly the same absolute magnitude as v3's
-most extreme reversal (chess960: −0.231). The v4 gap is positive where
-all v3 gaps are negative.
+†checkers_american unfiltered gap sourced from v3 SESSION_LOG "v4 Cell 1" entry.
+
+Three of v3's four cells (chess_standard, chess960, draughts_intl) were classified
+reversed under v3's pre-registered methodology with robustness across multiple
+statistical tests — all four tested methodologies produce negative gaps for these
+three cells. The fourth cell (checkers_american) sign-flips on filter choice:
++0.039 unfiltered, −0.115 under the both-actionable filter v3 pre-registered.
+v3's SESSION_LOG records this as "warrants Myriam's input before further v4 cells"
+and the cell is classified "methodology-dependent; under review" in SPEC.md
+§"v3 status as of v4 pre-registration." The contrast with v4 (positive +0.131 vs
+three robust-reversed cells; checkers_american partially recovers signal under
+unfiltered analysis but remains negative under the same both-actionable filter
+v3 pre-registered) is informative regardless of how checkers_american is finally
+classified.
 
 Notable structural differences between v3 and v4 that likely contribute:
 
@@ -425,17 +434,18 @@ likely to produce a correct prediction on real chains as on shuffled chains,
 when the two disagree. The ratio b:c directly drives the gap direction (gap > 0
 iff b > c).
 
-For comparison, v3's discordant ratios (from `phase1_v31_scored_full.json`):
+For comparison, v3's discordant ratios (from `phase1_v31_scored_full.json`,
+filtered layer1_actionable):
 - chess_standard: b=34, c=275 → b:c = 0.12 (shuffled-correct 8× more common)
 - chess960: b=11, c=300 → b:c = 0.04 (shuffled-correct 27× more common)
 - checkers_american: b=124, c=296 → b:c = 0.42 (shuffled-correct 2.4× more common)
 - draughts_intl: b=53, c=291 → b:c = 0.18 (shuffled-correct 5.5× more common)
 
-v3's c >> b pattern (shuffled more often correct than real) is the structural
-opposite of v4's b > c pattern. In v3, shuffled chains at the filtered
-constraint positions were more often matching the reference top-k than real chains —
-a strong inversion. In v4, real chains at those positions are more often
-matching — consistent with the positive signal hypothesis.
+All three robust-reversed v3 cells show c >> b (shuffled more often correct than
+real) — the structural opposite of v4's b > c pattern. checkers_american's
+b:c ratio (0.42) is the least extreme of the four, consistent with its weaker
+and filter-sensitive reversal. In v4, real chains are more often matching —
+consistent with the positive signal hypothesis.
 
 ### 6. Backoff-level distribution
 
@@ -462,6 +472,12 @@ v4's higher level-0 fraction (97.25%) likely reflects v1's chains being longer
 (average 39 constraints vs ~20–25 for v3's chess chains per v3 SESSION_LOG),
 providing richer prefix windows for state-signature resolution.
 
+The high level-0 fraction is also consistent with Pokémon battles repeating
+similar (HP bracket × phase × move-type) state tuples across thousands of
+matches more densely than chess positions repeat across games. This shared state
+structure is what the methodology is designed to detect; v4's strong gap is
+consistent with that interpretation.
+
 ---
 
 ## Discussion
@@ -475,10 +491,12 @@ Per SPEC.md §"Pre-registered Interpretation Framework":
 > adaptations (phase-name default; actionable types include ResourceBudget and
 > InformationState) — produces a real-vs-shuffled detectability gap consistent
 > with, and stronger than, v1's own published Haiku result. This is consistent
-> with the interpretation that v3's reversed result on all four formal-game cells
-> reflects v3-specific chain-construction properties (resource_side dominance
-> and backoff differential per v3's SESSION_LOG; further mechanisms if any)
-> rather than a structural problem with the v3 statistical methodology.
+> with the interpretation that v3's reversed result on three of four formal-game
+> cells (with checkers_american under review per SPEC.md §"v3 status as of v4
+> pre-registration") reflects v3-specific chain-construction properties
+> (resource_side dominance and backoff differential per v3's SESSION_LOG;
+> further mechanisms if any) rather than a structural problem with the v3
+> statistical methodology.
 
 More precisely, the strong-positive result establishes:
 
@@ -506,11 +524,14 @@ More precisely, the strong-positive result establishes:
 
 Per SPEC.md §"What v4 does NOT change" and §"What this experiment is NOT":
 
-1. **v3's pre-registered classification stands.** v3's four cells (chess_standard,
-   chess960, checkers_american, draughts_intl) were classified as reversed under
-   v3's own SPEC.md pre-registration. v4 has standing to comment on v3's
-   *methodology*, not on v3's *classification*. v3's reversed classification is
-   unchanged.
+1. **v3's pre-registered classification stands.** v3's four cells were scored
+   under v3's own SPEC.md pre-registration; three (chess_standard, chess960,
+   draughts_intl) are classified reversed with robustness across methodologies.
+   checkers_american's classification is methodology-dependent and under review
+   per SPEC.md §"v3 status as of v4 pre-registration" (sign-flips on filter
+   choice: +0.039 unfiltered, −0.115 filtered). v4 has standing to comment on
+   v3's *methodology*, not on v3's *classification*. v3's classifications are
+   unchanged by this experiment.
 
 2. **v1's published results are not re-evaluated.** v4 uses v1 chains as input
    but does not re-measure v1's published gaps. v1's corrected Haiku gap (0.066)
@@ -588,6 +609,12 @@ to the scorer's match computation. The fix was implemented and reverted after
 the pilot gap remained at +0.050 with and without it (Session 2 addendum 4).
 The shuffler fixed-point does not bias the gap estimate.
 
+**Layer 2 reduces to Layer 1 for v4.** v3's Layer 2 is a legality × optimality
+composite; in v1's entity vocabulary, all top-k matches are trivially legal, so
+the composite degenerates to the top-k match indicator. Layer 2's separate
+threshold (gap ≥ 0.04) is therefore uninformative for v4 — Layer 1's
+strong-positive classification carries the analysis.
+
 **Both-actionable retention mechanism (Amendment 1 context).**
 The 100% both-actionable retention in v4 (vs ~35–43% in v3) reflects the
 6-type ACTIONABLE_TYPES set covering all constraint types present in v1 chains.
@@ -613,15 +640,14 @@ SPEC_v1.1 Amendments 1 and 2 sign-off: both authors, 2026-04-26.
 This work builds on the Project Ditto v1/v2/v3 program. v1 Pokémon chains
 were constructed under v1's pipeline (git tag `T-v1.1-frozen`). v3's scoring
 pipeline (`vendor/v3/`, pinned to commit `ac144c2`) is used without modification;
-all v4-specific adaptations are implemented in `src/v4_scorer_config.py` via
-monkey-patching.
+all v4-specific adaptations are implemented via wrapper modules in `src/`.
 
 Prior program: [Project Ditto v1](https://github.com/safiqsindha/Project-Ditto)
 (Pokémon, moderate/strong positive),
 [Project Ditto v2](https://github.com/safiqsindha/Project-Ditto-v2)
 (programming, partial replication),
 [Project Ditto V3](https://github.com/safiqsindha/Project-Ditto-V3)
-(formal-rule games, reversed on all four cells under pre-registered methodology).
+(formal-rule games, reversed on three of four cells; checkers_american under review).
 
 ---
 
