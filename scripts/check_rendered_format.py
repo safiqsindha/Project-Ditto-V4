@@ -24,11 +24,25 @@ PROJECT_ROOT = pathlib.Path(__file__).parent.parent
 MIRROR_DIR = PROJECT_ROOT / "data" / "v1_chains_mirror"
 SELECTION_PATH = PROJECT_ROOT / "v4_chain_selection.json"
 
-_VENDOR_V3 = PROJECT_ROOT / "vendor" / "v3"
-if str(_VENDOR_V3) not in sys.path:
-    sys.path.insert(0, str(_VENDOR_V3))
+import importlib.util  # noqa: E402
 
-from src.prompt_builder import cutoff_rendered, build_prompt  # noqa: E402
+_V3_SRC = PROJECT_ROOT / "vendor" / "v3" / "src"
+
+
+def _load_v3(name):
+    key = f"src.{name}"
+    if key in sys.modules:
+        return sys.modules[key]
+    spec = importlib.util.spec_from_file_location(key, _V3_SRC / f"{name}.py")
+    mod = importlib.util.module_from_spec(spec)
+    sys.modules[key] = mod
+    spec.loader.exec_module(mod)
+    return mod
+
+
+_v3_prompt = _load_v3("prompt_builder")
+cutoff_rendered = _v3_prompt.cutoff_rendered
+build_prompt = _v3_prompt.build_prompt
 
 
 def check(n_samples: int = 10) -> bool:

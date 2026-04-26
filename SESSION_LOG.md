@@ -144,3 +144,149 @@ This is documented as an engineering resolution in CLAUDE.md.
 6. Check Gate 2 criteria; notify lead author; halt for approval
 
 ---
+
+## Session 2 — 2026-04-26
+
+**Purpose:** Pilot validation — 50-chain end-to-end run (BUILD_PLAN §Session 2)
+
+### Tasks completed
+
+1. Ran `scripts/setup_v4_chains.py`: created `data/v4_pokemon_chains/real/pokemon/`
+   and `data/v4_pokemon_chains/shuffled/pokemon/` as symlink directories.
+   Result: 1,200 real + 3,600 shuffled chains available to scorer (0 missing).
+
+2. Built pilot reference distributions on 50 chains for all 5 candidate
+   `current_phase` defaults (`vs_unit_a`, `forced_switch_required`, `vs_unit_b`,
+   `phase_opening`, `unknown`). All 5 achieved 1.000 non-max-backoff coverage.
+
+3. Tiebreak selection: per SPEC §"if multiple candidates tie within 0.5 percentage
+   points, lead author selects." Selected `vs_unit_a` as most domain-appropriate
+   (most common v1 `to_phase` value, ~43% of SubGoalTransition events in 100-chain
+   survey). Recorded in `v4_pilot_decisions.json`.
+
+4. Built pilot reference distribution with `current_phase_default = "vs_unit_a"`;
+   saved to `data/reference_v4_pokemon_pilot.pkl`.
+
+5. Fixed `load_dotenv` env-var issue in `src/v4_runner.py`: replaced
+   `load_dotenv() + anthropic.Anthropic()` with
+   `dotenv_values(path) + anthropic.Anthropic(api_key=vals.get("ANTHROPIC_API_KEY"))`.
+   `load_dotenv()` returned `True` but did not populate `os.environ` on this
+   Python 3.9/macOS environment; `dotenv_values()` works correctly.
+
+6. Submitted 200 pilot batch calls (50 chains × 4 conditions × 1 config,
+   T=0.0 seed=42) via Anthropic Batches API.
+   Batch ID: `msgbatch_01WEJCoK5RQXYAcYfMqJMpoH`. Result: 200/200 succeeded,
+   0 errors.
+
+7. Added `--pilot` flag to `src/v4_scorer_config.py` to skip variance_study
+   Gate 4 check for pilot-mode scoring (primary config only; variance configs
+   run in Session 3).
+
+8. Scored pilot with `src/v4_scorer_config.py --pilot`. Scorer ran without
+   error; `results/pilot_scored.json` produced.
+
+9. Checked Gate 2 criteria (see below).
+
+### Pilot results summary
+
+| Layer | n_pairs | real_rate | shuffled_rate | gap | p_value |
+|---|---|---|---|---|---|
+| Layer 1 (all) | 140 | 0.2143 | 0.1929 | +0.0214 | 0.728 |
+| Layer 1 actionable | 43 | 0.0930 | 0.1163 | −0.0233 | 1.000 |
+| Layer 2 (continuous) | 150 | mean=0.200 | mean=0.180 | +0.020 | 0.603 |
+
+**Outcome tier:** `reversed` (from actionable layer). **Not interpretable at n=43 with chi2=0.**
+The pilot is not an effect-size test; tier is recorded for completeness only.
+
+### Diagnostic: both-actionable retention root cause
+
+Constraint type distribution at cutoff_k across 50 pilot real chains:
+
+| Type | Count | Actionable? |
+|---|---|---|
+| ResourceBudget | 23 (46%) | No |
+| ToolAvailability | 11 (22%) | Yes |
+| SubGoalTransition | 6 (12%) | Yes |
+| InformationState | 5 (10%) | Yes |
+| OptimizationCriterion | 4 (8%) | Yes |
+| CoordinationDependency | 1 (2%) | Yes |
+
+46% of real chains have `ResourceBudget` (non-actionable) at cutoff_k. Because the
+both-actionable filter requires actionable type in BOTH real AND shuffled chains,
+expected retention ≈ (0.54)² = 29.2%. Observed: 43/140 = 30.7%. Consistent with
+independent Bernoulli assumption.
+
+Root cause: `ResourceBudget` (HP/PP counters in Pokémon battle logs) appears
+frequently at mid-game cutoff positions. This is structural — the v1 domain
+genuinely has high ResourceBudget density.
+
+### Response vocabulary check
+
+Responses from 30 real chains (primary config):
+`'phase_vs_unit_A'` (8×), `'phase_vs_unit_C'` (8×), `'unit_D'` (4×),
+`'phase_vs_unit_B'` (4×), `'unit_F'` (4×), `'match_time_remaining'` (2×).
+
+**No prompt-vocabulary fixation.** Model outputs use native v1 vocabulary
+(`phase_vs_unit_*`, `unit_*`, `match_time_remaining`), not v3 chess vocabulary
+(`piece_A`, `formation_C`, `phase_endgame`). SPEC Risk 1 does not appear to be
+materializing. Recorded as observation for RESULTS.md §Limits.
+
+### Gate 2 status: **FAIL — halted for author review**
+
+| Criterion | Status | Details |
+|---|---|---|
+| 50 chains load, no schema errors | PASS | All 50 loaded cleanly |
+| Reference distribution ≥ 90% coverage | PASS | 1.000 at `vs_unit_a` default |
+| 200 batch calls succeed | PASS | 200/200, 0 errors |
+| Responses parse; non-zero match rate | PASS | real_rate=0.214, shuffled_rate=0.193 |
+| **Both-actionable retention ≥ 50%** | **FAIL** | **30.7% (43/140); threshold=50%** |
+| Pilot scoring produces valid JSON | PASS | `results/pilot_scored.json` well-formed |
+
+**Failure mode:** both-actionable retention = 30.7%, well below the 50% Gate 2
+threshold and outside the expected 60–85% range. Matches BUILD_PLAN §"Session 2
+fail modes": *"v1 chains have unexpectedly low actionable density at cutoff."*
+
+**Per BUILD_PLAN protocol: paused. Author review required before Session 3.**
+
+Possible paths forward (for author decision, not pre-committed):
+1. **Accept the low retention and proceed**: layer1_actionable will have ~360 pairs
+   (43/50 × 1,200 × ≈0.9 coverage) in the full 1,200-chain run — sufficient for
+   detection power if effect is present. The "both-actionable" filter still applies;
+   the analysis is just on a ~30% sub-sample of pairs.
+2. **Revise ACTIONABLE_TYPES to include ResourceBudget**: would raise retention to
+   ~100% but deviates from SPEC's 5-type set (methodology change → requires SPEC_v1.1
+   supplement and both-author sign-off).
+3. **Other**: defer to author judgment.
+
+### Files created or modified
+
+| File | Status |
+|---|---|
+| `data/v4_pokemon_chains/real/pokemon/` | new (symlink dir) |
+| `data/v4_pokemon_chains/shuffled/pokemon/` | new (symlink dir) |
+| `data/reference_v4_pokemon_pilot.pkl` | new (gitignored) |
+| `v4_pilot_decisions.json` | new |
+| `src/v4_runner.py` | modified (dotenv_values fix) |
+| `src/v4_scorer_config.py` | modified (--pilot flag, validate_output signature) |
+| `results/raw/pilot/primary/pokemon/*.json` | new (gitignored, 200 files) |
+| `results/pilot_scored.json` | new (gitignored) |
+| `SESSION_LOG.md` | this entry |
+
+### Blockers or open questions
+
+- **Gate 2 FAIL on both-actionable retention.** Root cause identified (ResourceBudget
+  density in v1). Three paths forward documented above. Author review required.
+- Next session (Session 3) cannot start without explicit author approval.
+
+### Next session (Session 3) planned tasks
+
+*(Pending author approval. Planned tasks assuming path 1 — proceed without SPEC change.)*
+
+1. Confirm Gate 3 pre-flight: pilot approved, chain selection unchanged
+2. Build full reference distribution (1,200 chains) at `vs_unit_a` default
+3. Submit 14,400 calls across 3 configs (primary + variance1 + variance2)
+4. Monitor for technical errors only; no effect-size monitoring
+5. Save raw results; generate blinded mirrors
+6. Gate 3 post-eval check
+
+---

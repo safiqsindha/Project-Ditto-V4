@@ -48,14 +48,29 @@ import sys
 from pathlib import Path
 
 # ---------------------------------------------------------------------------
-# Vendor path setup
+# Vendor path setup — load v3 modules by path to avoid src namespace conflict
 # ---------------------------------------------------------------------------
 
-_VENDOR_V3 = pathlib.Path(__file__).parent.parent / "vendor" / "v3"
-if str(_VENDOR_V3) not in sys.path:
-    sys.path.insert(0, str(_VENDOR_V3))
+import importlib.util  # noqa: E402
 
-import src.scorer as _v3_scorer  # noqa: E402
+_V3_SRC = pathlib.Path(__file__).parent.parent / "vendor" / "v3" / "src"
+
+
+def _load_v3(name: str):
+    key = f"src.{name}"
+    if key in sys.modules:
+        return sys.modules[key]
+    spec = importlib.util.spec_from_file_location(key, _V3_SRC / f"{name}.py")
+    mod = importlib.util.module_from_spec(spec)
+    sys.modules[key] = mod
+    spec.loader.exec_module(mod)
+    return mod
+
+
+# scorer imports from src.normalize and src.reference — load those first
+_load_v3("normalize")
+_load_v3("reference")
+_v3_scorer = _load_v3("scorer")
 
 # ---------------------------------------------------------------------------
 # v4 configuration patches
@@ -116,11 +131,12 @@ def score_v4(
     return scored
 
 
-def validate_output(scored: dict) -> list[str]:
+def validate_output(scored: dict, pilot: bool = False) -> list[str]:
     """
     Validate scored output against Gate 4 pass criteria.
 
     Returns list of failure messages (empty = all pass).
+    pilot=True skips the variance_study check (pilot only runs primary config).
     """
     failures = []
 
@@ -129,9 +145,10 @@ def validate_output(scored: dict) -> list[str]:
         failures.append(f"primary_cells keys: expected ['haiku::pokemon'], got {list(primary.keys())}")
 
     variance = scored.get("variance_study", {})
-    expected_var = {"haiku::pokemon::T0.5_seed1337", "haiku::pokemon::T0.5_seed7919"}
-    if set(variance.keys()) != expected_var:
-        failures.append(f"variance_study keys: expected {expected_var}, got {set(variance.keys())}")
+    if not pilot:
+        expected_var = {"haiku::pokemon::T0.5_seed1337", "haiku::pokemon::T0.5_seed7919"}
+        if set(variance.keys()) != expected_var:
+            failures.append(f"variance_study keys: expected {expected_var}, got {set(variance.keys())}")
 
     for label, cell in {**primary, **variance}.items():
         for field in ("gap", "mcnemar_chi2", "raw_p", "bonferroni_p",
@@ -168,6 +185,8 @@ if __name__ == "__main__":
                         help="Base dir with real/ and shuffled/ subdirectories")
     parser.add_argument("--out", type=Path, required=True,
                         help="Output path for scored JSON")
+    parser.add_argument("--pilot", action="store_true",
+                        help="Pilot mode: skip variance_study Gate 4 check (primary config only)")
     args = parser.parse_args()
 
     print(f"[v4_scorer] SOURCES={V4_SOURCES}")
@@ -177,7 +196,7 @@ if __name__ == "__main__":
     scored = score_v4(args.results, args.reference, args.chains_dir, args.out.parent / "tmp")
 
     # Validate output structure
-    failures = validate_output(scored)
+    failures = validate_output(scored, pilot=args.pilot)
     if failures:
         print("\n[v4_scorer] GATE 4 FAILURES:")
         for f in failures:

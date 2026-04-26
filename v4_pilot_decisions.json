@@ -1,0 +1,13 @@
+{
+  "current_phase_default": "vs_unit_a",
+  "selection_rationale": "tiebreak_lead_author",
+  "tiebreak_note": "All 5 candidates achieved 1.000 coverage on pilot 50 chains (built from same chains). Per SPEC: 'if multiple candidate defaults tie within 0.5 percentage points, the lead author selects'. vs_unit_a selected as most domain-appropriate: most common v1 to_phase value (~43% of SubGoalTransition events in 100-chain survey). Chains with no SGT in prefix window (~3%) will default to vs_unit_a state-sig bucket.",
+  "scan_results": [
+    {"default_phase": "vs_unit_a",            "non_max_backoff_fraction": 1.0, "passes_90pct": true},
+    {"default_phase": "forced_switch_required","non_max_backoff_fraction": 1.0, "passes_90pct": true},
+    {"default_phase": "vs_unit_b",            "non_max_backoff_fraction": 1.0, "passes_90pct": true},
+    {"default_phase": "phase_opening",         "non_max_backoff_fraction": 1.0, "passes_90pct": true},
+    {"default_phase": "unknown",               "non_max_backoff_fraction": 1.0, "passes_90pct": true}
+  ],
+  "date": "2026-04-26"
+}

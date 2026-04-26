@@ -1,0 +1,62 @@
+[
+  {
+    "default_phase": "vs_unit_a",
+    "total_chains": 50,
+    "non_max_backoff_fraction": 1.0,
+    "level_counts": {
+      "0": 50,
+      "1": 0,
+      "2": 0,
+      "3": 0
+    },
+    "passes_90pct": true
+  },
+  {
+    "default_phase": "forced_switch_required",
+    "total_chains": 50,
+    "non_max_backoff_fraction": 1.0,
+    "level_counts": {
+      "0": 50,
+      "1": 0,
+      "2": 0,
+      "3": 0
+    },
+    "passes_90pct": true
+  },
+  {
+    "default_phase": "vs_unit_b",
+    "total_chains": 50,
+    "non_max_backoff_fraction": 1.0,
+    "level_counts": {
+      "0": 50,
+      "1": 0,
+      "2": 0,
+      "3": 0
+    },
+    "passes_90pct": true
+  },
+  {
+    "default_phase": "phase_opening",
+    "total_chains": 50,
+    "non_max_backoff_fraction": 1.0,
+    "level_counts": {
+      "0": 50,
+      "1": 0,
+      "2": 0,
+      "3": 0
+    },
+    "passes_90pct": true
+  },
+  {
+    "default_phase": "unknown",
+    "total_chains": 50,
+    "non_max_backoff_fraction": 1.0,
+    "level_counts": {
+      "0": 50,
+      "1": 0,
+      "2": 0,
+      "3": 0
+    },
+    "passes_90pct": true
+  }
+]

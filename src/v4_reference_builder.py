@@ -36,15 +36,27 @@ import sys
 from typing import Any
 
 # ---------------------------------------------------------------------------
-# Vendor path setup — import v3 without modifying its source
+# Vendor path setup — load v3 modules by path to avoid src namespace conflict
 # ---------------------------------------------------------------------------
 
-_VENDOR_V3 = pathlib.Path(__file__).parent.parent / "vendor" / "v3"
-if str(_VENDOR_V3) not in sys.path:
-    sys.path.insert(0, str(_VENDOR_V3))
+import importlib.util  # noqa: E402
 
-import src.reference as _v3_ref  # noqa: E402 — must follow sys.path insert
+_V3_SRC = pathlib.Path(__file__).parent.parent / "vendor" / "v3" / "src"
 
+
+def _load_v3(name: str):
+    """Load a v3 src module by file path and register it as src.{name}."""
+    key = f"src.{name}"
+    if key in sys.modules:
+        return sys.modules[key]
+    spec = importlib.util.spec_from_file_location(key, _V3_SRC / f"{name}.py")
+    mod = importlib.util.module_from_spec(spec)
+    sys.modules[key] = mod
+    spec.loader.exec_module(mod)
+    return mod
+
+
+_v3_ref = _load_v3("reference")
 ReferenceDistribution = _v3_ref.ReferenceDistribution
 
 # Default candidates to test during pilot scan. "phase_opening" is v3's
@@ -111,8 +123,7 @@ def _make_patched_extract(default_phase: str):
         resource_bracket = 4
         for c in reversed(window):
             if c.get("type") == "ResourceBudget":
-                from src.reference import _resource_bracket
-                resource_bracket = _resource_bracket(c.get("amount", 1.0))
+                resource_bracket = _v3_ref._resource_bracket(c.get("amount", 1.0))
                 break
 
         entity_label = _v3_ref.extract_entity_from_constraint(last_constraint) or "unknown"

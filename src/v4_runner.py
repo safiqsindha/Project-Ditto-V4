@@ -31,21 +31,43 @@ import sys
 import time
 from pathlib import Path
 
-from dotenv import load_dotenv
+from dotenv import load_dotenv, dotenv_values
 
 # ---------------------------------------------------------------------------
-# Vendor path setup
+# Vendor path setup — load v3 modules by path to avoid src namespace conflict
 # ---------------------------------------------------------------------------
 
-_VENDOR_V3 = pathlib.Path(__file__).parent.parent / "vendor" / "v3"
-if str(_VENDOR_V3) not in sys.path:
-    sys.path.insert(0, str(_VENDOR_V3))
+import importlib.util  # noqa: E402
+
+_V3_SRC = pathlib.Path(__file__).parent.parent / "vendor" / "v3" / "src"
+
+
+def _load_v3(name: str):
+    key = f"src.{name}"
+    if key in sys.modules:
+        return sys.modules[key]
+    spec = importlib.util.spec_from_file_location(key, _V3_SRC / f"{name}.py")
+    mod = importlib.util.module_from_spec(spec)
+    sys.modules[key] = mod
+    spec.loader.exec_module(mod)
+    return mod
+
 
 import anthropic  # noqa: E402
-from src.prompt_builder import PROMPT_VERSION, SYSTEM_PROMPT, build_prompt, cutoff_rendered  # noqa: E402
-from src.normalize import normalize_action  # noqa: E402
-import src.runner as _v3_runner  # noqa: E402
-from src.shuffler import shuffle_chain  # noqa: E402
+
+# Load v3 modules in dependency order (each must be in sys.modules before
+# any module that imports it is exec'd).
+_v3_normalize = _load_v3("normalize")
+_v3_prompt = _load_v3("prompt_builder")
+_load_v3("translation")       # shuffler imports src.translation
+_v3_shuffler = _load_v3("shuffler")
+_v3_runner = _load_v3("runner")
+
+PROMPT_VERSION = _v3_prompt.PROMPT_VERSION
+SYSTEM_PROMPT = _v3_prompt.SYSTEM_PROMPT
+build_prompt = _v3_prompt.build_prompt
+cutoff_rendered = _v3_prompt.cutoff_rendered
+shuffle_chain = _v3_shuffler.shuffle_chain
 
 # ---------------------------------------------------------------------------
 # v4 constants
@@ -164,8 +186,8 @@ def run_batch(
     if configs is None:
         configs = EVAL_CONFIGS
 
-    load_dotenv()
-    client = anthropic.Anthropic()
+    env_vals = dotenv_values(pathlib.Path(__file__).parent.parent / ".env")
+    client = anthropic.Anthropic(api_key=env_vals.get("ANTHROPIC_API_KEY"))
 
     # Build request list and metadata index
     all_requests: dict[str, list] = {cfg["label"]: [] for cfg in configs}
