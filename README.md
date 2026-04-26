@@ -14,7 +14,7 @@ reflects a flaw in the methodology or a property of v3's chain construction.
 | n_pairs_actionable | 3,600 (100% retention) |
 | Model | Claude Haiku 4.5 |
 | Pre-registration | `SPEC.md` v1.0, signed off 2026-04-26 |
-| Both-author sign-off | Safiq Sindha + Myriam (Columbia University) |
+| Both-author sign-off | Safiq Sindha + Myriam Khalil |
 
 The gap of +0.1311 clears the pre-registered strong-positive threshold
 (gap ≥ 0.08, Bonferroni p < 0.01) by a wide margin and replicates across
