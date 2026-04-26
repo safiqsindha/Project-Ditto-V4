@@ -1,0 +1,53 @@
+{
+  "phase": "phase1",
+  "completion_date": "2026-04-26",
+  "model": "claude-haiku-4-5-20251001",
+  "source": "pokemon",
+  "configs": [
+    {
+      "label": "primary",
+      "temperature": 0.0,
+      "seed": 42,
+      "batch_id": "msgbatch_01EvSYwd8YXJH8ReMYE6aGDi"
+    },
+    {
+      "label": "variance1",
+      "temperature": 0.5,
+      "seed": 1337,
+      "batch_id": "msgbatch_01KFr3gDPDdJQCwDPT2VdbBX"
+    },
+    {
+      "label": "variance2",
+      "temperature": 0.5,
+      "seed": 7919,
+      "batch_id": "msgbatch_01FfstmbRK1EfPuT7YBoNbxZ"
+    }
+  ],
+  "totals": {
+    "submitted": 14400,
+    "completed": 14400,
+    "errors": 0,
+    "per_config": 4800
+  },
+  "applied_amendments": [
+    "SPEC_v1.1 Amendment 1 (ResourceBudget added to ACTIONABLE_TYPES, scoring-side)",
+    "SPEC_v1.1 Amendment 2 (phase_ prefix strip in response normalization, scoring-side)"
+  ],
+  "reference_distribution": {
+    "path": "data/reference_v4_pokemon_full.pkl",
+    "built_from": "1200 real chains (v4_chain_selection.json)",
+    "default_phase": "vs_unit_a",
+    "non_max_backoff_fraction": 0.9725,
+    "level_counts": {
+      "0": 1167,
+      "1": 0,
+      "2": 0,
+      "3": 33
+    }
+  },
+  "result_paths": {
+    "primary": "results/raw/phase1/primary/pokemon/",
+    "variance1": "results/raw/phase1/variance1/pokemon/",
+    "variance2": "results/raw/phase1/variance2/pokemon/"
+  }
+}

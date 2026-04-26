@@ -1,0 +1,21 @@
+[v4_runner] loaded 1200 chains
+[v4_runner] 14400 total requests across 3 configs
+  primary: 4800 requests
+  variance1: 4800 requests
+  variance2: 4800 requests
+[v4_runner] submitted batch msgbatch_01EvSYwd8YXJH8ReMYE6aGDi (4800 requests) [primary]
+[v4_runner] batch msgbatch_01EvSYwd8YXJH8ReMYE6aGDi [primary] status=in_progress
+[v4_runner] batch msgbatch_01EvSYwd8YXJH8ReMYE6aGDi [primary] status=in_progress
+[v4_runner] batch msgbatch_01EvSYwd8YXJH8ReMYE6aGDi [primary] status=in_progress
+[v4_runner] batch msgbatch_01EvSYwd8YXJH8ReMYE6aGDi [primary] status=in_progress
+[v4_runner] batch msgbatch_01EvSYwd8YXJH8ReMYE6aGDi [primary] status=in_progress
+[v4_runner] submitted batch msgbatch_01KFr3gDPDdJQCwDPT2VdbBX (4800 requests) [variance1]
+[v4_runner] batch msgbatch_01KFr3gDPDdJQCwDPT2VdbBX [variance1] status=in_progress
+[v4_runner] batch msgbatch_01KFr3gDPDdJQCwDPT2VdbBX [variance1] status=in_progress
+[v4_runner] batch msgbatch_01KFr3gDPDdJQCwDPT2VdbBX [variance1] status=in_progress
+[v4_runner] submitted batch msgbatch_01FfstmbRK1EfPuT7YBoNbxZ (4800 requests) [variance2]
+[v4_runner] batch msgbatch_01FfstmbRK1EfPuT7YBoNbxZ [variance2] status=in_progress
+[v4_runner] batch msgbatch_01FfstmbRK1EfPuT7YBoNbxZ [variance2] status=in_progress
+[v4_runner] batch msgbatch_01FfstmbRK1EfPuT7YBoNbxZ [variance2] status=in_progress
+
+[v4_runner] done: {'submitted': 14400, 'completed': 14400, 'errors': 0}

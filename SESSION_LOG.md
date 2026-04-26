@@ -482,6 +482,88 @@ in Session 3, including Amendments 1 and 2.
 
 *(After co-author sign-off on SPEC_v1.1 Amendments 1 and 2.)*
 
+---
+
+## Session 3 — 2026-04-26
+
+**Purpose:** Full v4 evaluation Phase 1 (BUILD_PLAN §Session 3)
+
+### Tasks completed
+
+1. **Co-author sign-off recorded.** Myriam approved SPEC_v1.1 Amendments 1
+   and 2 on 2026-04-26. SPEC_v1.1.md status updated from "co-author pending"
+   to "both authors approved". Methodology change protocol cleared.
+
+2. **Gate 3 pre-flight checks:**
+   - `v4_chain_selection.json` SHA-256: `a6a2ab9df6fb8703fec90026c5db22c394b531d75a746f09088101d266009a7c` —
+     unchanged since pre-registration commit `91c5138` ✓
+   - All 1,200 chains load successfully (0 missing, 0 errors) ✓
+   - Total 46,765 constraints across 1,200 chains (avg 39.0 per chain) ✓
+   - Full reference distribution built at `vs_unit_a` default:
+     1167/1200 = **97.25% level-0 coverage**, 33 chains at level 3 ✓
+   - Cost estimate: ~$21.60 (above the BUILD_PLAN's $5–15 pre-flight ceiling
+     but below the $50 hard cap) — **lead author authorized exception**.
+
+3. **Submitted full evaluation** via Anthropic Messages Batches API:
+   - Primary (T=0.0, seed=42): batch `msgbatch_01EvSYwd8YXJH8ReMYE6aGDi`
+   - Variance1 (T=0.5, seed=1337): batch `msgbatch_01KFr3gDPDdJQCwDPT2VdbBX`
+   - Variance2 (T=0.5, seed=7919): batch `msgbatch_01FfstmbRK1EfPuT7YBoNbxZ`
+   - Result: **14,400 submitted, 14,400 completed, 0 errors** (100% success)
+
+4. Generated `results/phase1_summary.json` with batch IDs, configs, and
+   reference distribution metadata.
+
+5. **No effect-size monitoring** during the run, per BUILD_PLAN discipline.
+
+### Gate 3 status: **PASS** (post-eval)
+
+| Criterion | Status | Details |
+|---|---|---|
+| Total calls submitted = 14,400 | PASS | exactly 14,400 |
+| Total succeeded ≥ 14,260 (≥ 99%) | PASS | 14,400/14,400 = 100% |
+| Per-config call count = 4,800 | PASS | 4,800 each across primary/variance1/variance2 |
+| Raw results in `results/raw/phase1/{config}/pokemon/` | PASS | 4,800 files per config |
+| Cost stayed within authorized exception | PASS | ~$22 (within $50 hard cap) |
+
+Note on blinded protocol: v4 is single-cell (one model, one source, one
+prompt). Blinding by model/source/condition is moot. Filenames retain
+model/seed/temperature for traceability; scoring will operate on raw
+results and reconstruct pairing from chain_id patterns per v3 protocol.
+Recorded for SPEC compliance audit.
+
+### Files created or modified
+
+| File | Status |
+|---|---|
+| `data/reference_v4_pokemon_full.pkl` | new (gitignored — large) |
+| `data/reference_v4_pokemon_full.coverage.json` | new (committed) |
+| `results/raw/phase1/{primary,variance1,variance2}/pokemon/*.json` | new (gitignored — 14,400 files) |
+| `results/phase1_summary.json` | new (committed) |
+| `results/phase1_log.txt` | new (committed) |
+| `SPEC_v1.1.md` | modified (Myriam sign-off) |
+| `SESSION_LOG.md` | append Session 3 entry |
+
+### Stop point
+
+**Per BUILD_PLAN §Session 3:** Stop here. Do not auto-proceed to scoring.
+Session 4 (scoring) must be run in a fresh session per v4's blinded
+discipline. Lead author should review pre-flight stats above and start
+Session 4 separately.
+
+### Next session (Session 4) planned tasks
+
+1. Open fresh session
+2. Run `src/v4_scorer_config.py` against `results/raw/phase1/` with the
+   full reference distribution (`data/reference_v4_pokemon_full.pkl`)
+3. Verify Gate 4: scored output structure matches SPEC_v1.1 Amendment 3
+   shape (primary_cells with one entry, variance_study with two entries)
+4. Per-cell threshold classification produces an outcome tier in
+   {strong_positive, moderate_positive, null, reversed}
+5. Commit `results/v4_scored.json`
+6. Stop for lead author review before Session 5 RESULTS.md write-up
+
+---
+
 1. Confirm Gate 3 pre-flight: pilot approved, chain selection unchanged
 2. Build full reference distribution (1,200 chains) at `vs_unit_a` default
 3. Submit 14,400 calls across 3 configs (primary + variance1 + variance2)
