@@ -3,7 +3,7 @@
 **Supplements:** `SPEC.md` v1.0 (2026-04-26)
 **Date:** 2026-04-26
 **Authors:** Safiq Sindha (lead), Myriam (co-author)
-**Status:** Lead author approved; co-author sign-off pending
+**Status:** Both authors approved (2026-04-26)
 
 ---
 
@@ -100,7 +100,7 @@ analysis. Including it is the correct domain adaptation.
 | Author | Role | Date | Signature |
 |---|---|---|---|
 | Safiq Sindha | Lead author | 2026-04-26 | ✓ approved |
-| Myriam | Co-author | — | pending |
+| Myriam | Co-author | 2026-04-26 | ✓ approved |
 
 ---
 
@@ -197,7 +197,7 @@ The adapter is conservative:
 | Author | Role | Date | Signature |
 |---|---|---|---|
 | Safiq Sindha | Lead author | 2026-04-26 | ✓ approved |
-| Myriam | Co-author | — | pending |
+| Myriam | Co-author | 2026-04-26 | ✓ approved |
 
 ---
 
