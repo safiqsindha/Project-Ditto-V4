@@ -70,7 +70,7 @@ def _load_v3(name: str):
 
 # scorer imports from src.normalize and src.reference — load those first
 _load_v3("normalize")
-_load_v3("reference")
+_v3_ref = _load_v3("reference")
 _v3_scorer = _load_v3("scorer")
 
 # ---------------------------------------------------------------------------
@@ -95,25 +95,51 @@ V4_ACTIONABLE_TYPES: set[str] = {
 # Bonferroni divisor = 1 (single analysis, single cell — no correction applied)
 V4_BONFERRONI_DIVISOR: int = 1
 
+# current_phase default for state-sig lookup — must match the value used when
+# building the reference distribution (recorded in v4_pilot_decisions.json).
+V4_CURRENT_PHASE_DEFAULT: str = "vs_unit_a"
+
+
+def _make_patched_extract(default_phase: str):
+    """
+    Return (original, patched) for extract_state_signature.
+
+    The patched version replaces v3's "phase_opening" fallback with
+    default_phase. In v1 chains, to_phase is never "phase_opening", so
+    any result tuple starting with "phase_opening" must be a fallback
+    (no SubGoalTransition in prefix window) and is safe to remap.
+    """
+    original = _v3_ref.extract_state_signature
+
+    def _patched(constraints, cutoff_k, backoff_level=0):
+        result = original(constraints, cutoff_k, backoff_level=backoff_level)
+        if result and result[0] == "phase_opening":
+            return (default_phase,) + result[1:]
+        return result
+
+    return original, _patched
+
 
 def score_v4(
     results_dir: Path,
     reference_path: Path,
     chains_dir: Path,
-    out_path: Path,
 ) -> dict:
     """
     Score v4 results with the v1-domain configuration.
 
-    Patches v3's module-level SOURCES and ACTIONABLE_TYPES, calls score_all,
-    then restores originals.
+    Patches v3's module-level SOURCES, ACTIONABLE_TYPES, and
+    extract_state_signature (to use vs_unit_a default instead of phase_opening),
+    calls score_all, then restores originals.
     """
     # Patch module constants
     orig_sources = _v3_scorer.SOURCES
     orig_actionable = _v3_scorer.ACTIONABLE_TYPES
+    orig_extract, patched_extract = _make_patched_extract(V4_CURRENT_PHASE_DEFAULT)
 
     _v3_scorer.SOURCES = V4_SOURCES
     _v3_scorer.ACTIONABLE_TYPES = V4_ACTIONABLE_TYPES
+    _v3_ref.extract_state_signature = patched_extract
 
     try:
         dist_paths = {"pokemon": reference_path}
@@ -130,6 +156,7 @@ def score_v4(
     finally:
         _v3_scorer.SOURCES = orig_sources
         _v3_scorer.ACTIONABLE_TYPES = orig_actionable
+        _v3_ref.extract_state_signature = orig_extract
 
     return scored
 
@@ -154,14 +181,14 @@ def validate_output(scored: dict, pilot: bool = False) -> list[str]:
             failures.append(f"variance_study keys: expected {expected_var}, got {set(variance.keys())}")
 
     for label, cell in {**primary, **variance}.items():
-        for field in ("gap", "mcnemar_chi2", "raw_p", "bonferroni_p",
-                      "n_pairs", "both_actionable_retention", "outcome_tier"):
-            # Check top-level or within layer1_actionable (v3's nested format)
-            l1a = cell.get("layer1_actionable_bonferroni") or cell.get("layer1_actionable") or {}
-            if field == "outcome_tier" and "outcome_tier" not in cell:
-                failures.append(f"{label}: missing 'outcome_tier'")
-            if field == "gap" and "gap" not in l1a:
-                failures.append(f"{label}: missing 'gap' in layer1_actionable")
+        l1a = cell.get("layer1_actionable_bonferroni") or cell.get("layer1_actionable") or {}
+        for field in ("gap", "chi2_stat", "p_value", "n_pairs"):
+            if field not in l1a:
+                failures.append(f"{label}: missing '{field}' in layer1_actionable")
+        if "p_value_bonferroni" not in l1a and "layer1_actionable_bonferroni" in cell:
+            failures.append(f"{label}: missing 'p_value_bonferroni' in layer1_actionable_bonferroni")
+        if "outcome_tier" not in cell:
+            failures.append(f"{label}: missing 'outcome_tier'")
 
         tier = cell.get("outcome_tier")
         valid_tiers = {"strong_positive", "moderate_positive", "weak_mixed", "null", "reversed"}
@@ -196,7 +223,7 @@ if __name__ == "__main__":
     print(f"[v4_scorer] ACTIONABLE_TYPES={sorted(V4_ACTIONABLE_TYPES)}")
     print(f"[v4_scorer] Bonferroni divisor={V4_BONFERRONI_DIVISOR}")
 
-    scored = score_v4(args.results, args.reference, args.chains_dir, args.out.parent / "tmp")
+    scored = score_v4(args.results, args.reference, args.chains_dir)
 
     # Validate output structure
     failures = validate_output(scored, pilot=args.pilot)
