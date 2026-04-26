@@ -572,3 +572,135 @@ Session 4 separately.
 6. Gate 3 post-eval check
 
 ---
+
+## Session 4 — 2026-04-26
+
+**Purpose:** Scoring (separate session, blinded) — BUILD_PLAN §Session 4
+
+### Tasks completed
+
+1. **Pre-session reads.** Read SPEC.md, SPEC_v1.1.md, CLAUDE.md,
+   BUILD_PLAN.md §Session 4 / §Gate 4, and Session 3 log entry.
+   Confirmed git status clean (only `.claude/` untracked — expected).
+
+2. **Verified raw result file counts.** 4,800 files per config directory
+   (`results/raw/phase1/{primary,variance1,variance2}/pokemon/`) = 14,400
+   total. All result files verified to carry correct `source: "pokemon"`,
+   `model: "haiku"`, and per-config temperature/seed values.
+
+3. **Ran scorer:**
+   ```
+   python3 -m src.v4_scorer_config \
+     --results results/raw/phase1 \
+     --reference data/reference_v4_pokemon_full.pkl \
+     --chains-dir data/v4_pokemon_chains \
+     --out results/v4_scored.json
+   ```
+
+4. **Engineering fix: `validate_output` correctly scoped.**
+   First run exited with Gate 4 failures:
+   `haiku::pokemon::T0.5_seed1337: missing 'outcome_tier'` and
+   `haiku::pokemon::T0.5_seed7919: missing 'outcome_tier'`.
+
+   Root cause: `validate_output` iterated over `{**primary, **variance}`
+   and checked `outcome_tier` on all cells. v3's scorer (by design)
+   only sets `outcome_tier` on primary cells — variance study results
+   are "descriptive only; not in Bonferroni family" per SPEC_v1.1
+   Amendment 3 / scorer.py L539. The validator was wrong; the scorer
+   was correct.
+
+   Fix: moved the `outcome_tier` presence check to iterate over
+   `primary.items()` only. This is a pure engineering fix to the Gate 4
+   validator — not a methodology change. The check's intent (outcome tier
+   is set and valid on the primary cell) is unchanged.
+
+   Second run: Gate 4 PASS.
+
+5. **Gate 4 manual verification.** All criteria confirmed:
+
+   | Criterion | Status | Details |
+   |---|---|---|
+   | primary_cells has exactly one entry: "haiku::pokemon" | PASS | ✓ |
+   | variance_study has exactly two entries | PASS | T0.5_seed1337, T0.5_seed7919 |
+   | gap, chi2_stat, p_value, n_pairs in layer1_actionable | PASS | all present |
+   | outcome_tier in {strong_positive, moderate_positive, null, reversed} | PASS | strong_positive |
+   | p_value_bonferroni == p_value (divisor=1) | PASS | both 0.0 |
+   | significant_bonferroni = True | PASS | ✓ |
+   | No missing pairs | PASS | missing_real=0, missing_shuffled=0 |
+
+### Gate 4 status: **PASS**
+
+### Headline result
+
+**PRIMARY CELL (haiku::pokemon) — strong_positive**
+
+| Metric | Value |
+|---|---|
+| gap (real − shuffled) | **+0.1311** |
+| chi2_stat | 167.30 |
+| p_value | 0.0 |
+| p_value_bonferroni | 0.0 (divisor=1) |
+| n_pairs_actionable | 3,600 (all 1,200 × 3 shuffle seeds; 100% retention) |
+| n_base_chains | 1,200 (0 missing) |
+| outcome_tier | **strong_positive** |
+
+Gap 0.1311 >> 0.08 strong-positive threshold.
+p ≈ 0 << 0.01 strong-positive threshold.
+McNemar chi2 = 167.30 (df=1).
+
+**VARIANCE STUDY (descriptive):**
+
+| Config | gap |
+|---|---|
+| T0.5/seed=1337 | +0.1431 |
+| T0.5/seed=7919 | +0.1339 |
+
+Both variance configs replicate the strong-positive direction with larger gaps
+(T0.5 configs show modestly higher gaps than T=0.0, consistent with increased
+variance in model outputs at higher temperature not collapsing the signal).
+
+### Interpretation note (per SPEC.md §Pre-registered Interpretation Framework)
+
+v4 primary outcome is **strong_positive**. Per SPEC.md §"If primary clears
+moderate-positive": v3's pre-registered methodology, applied to v1's organically
+distributed Pokémon chains with the two pre-registered v1-domain adaptations
+(vs_unit_a phase default; 6-type ACTIONABLE_TYPES per SPEC_v1.1 Amendment 1),
+produces a real-vs-shuffled detectability gap (0.1311) that is:
+- Roughly 2× v1's published Haiku gap (0.066 corrected)
+- Well above the strong-positive threshold (0.08)
+- Statistically overwhelming (p ≈ 0, chi2=167)
+
+This is the strongest possible confirmation of the v4 hypothesis. v3's
+methodology is not the source of v3's reversal on chess/draughts chains;
+the reversal is attributable to v3-specific chain-construction properties.
+
+**Blinding note:** v4 is single-cell (one model, one source, one prompt).
+Blinding by model/source/condition is moot. Scoring operates on raw results;
+filenames retain model/seed/temperature for traceability. Per Session 3
+log: "Recorded for SPEC compliance audit."
+
+### Files created or modified
+
+| File | Status |
+|---|---|
+| `results/v4_scored.json` | new (committed) |
+| `src/v4_scorer_config.py` | modified (validate_output engineering fix) |
+| `SESSION_LOG.md` | this entry |
+
+### Blockers or open questions
+
+- None. Gate 4 fully green.
+- The validate_output engineering fix is documented above; it does not
+  affect the scored output.
+
+### Next session (Session 5) planned tasks
+
+1. Lead author reviews `results/v4_scored.json` and this SESSION_LOG entry
+2. Open Session 5 for RESULTS.md write-up
+3. RESULTS.md sections per BUILD_PLAN §Session 5:
+   - Status, Abstract, Hypothesis, Pre-registered Success Criteria, Methods,
+     Results, Supplementary Analyses (5 items), Discussion, Limits, Authors
+4. All 5 supplementary analyses (per SPEC.md §Pre-registered Supplementary
+   Analyses): per-config variance, constraint-type carrier, comparison to v1
+   published numbers, pair-level disagreement, backoff-level distribution
+5. Send draft to Myriam for co-author review (Gate 5)

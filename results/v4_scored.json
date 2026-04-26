@@ -1,0 +1,175 @@
+{
+  "n_results": 14400,
+  "bonferroni_divisor_primary": 1,
+  "primary_cells": {
+    "haiku::pokemon": {
+      "layer1": {
+        "n_pairs": 3600,
+        "n11_concordant_both_match": 235,
+        "b_discordant_real_match": 899,
+        "c_discordant_shuffled_match": 427,
+        "n00_concordant_neither": 2039,
+        "real_rate": 0.315,
+        "shuffled_rate": 0.1839,
+        "gap": 0.1311,
+        "chi2_stat": 167.3009,
+        "p_value": 0.0,
+        "significant_05": true,
+        "test": "mcnemar_continuity_corrected"
+      },
+      "layer1_actionable": {
+        "n_pairs": 3600,
+        "n11_concordant_both_match": 235,
+        "b_discordant_real_match": 899,
+        "c_discordant_shuffled_match": 427,
+        "n00_concordant_neither": 2039,
+        "real_rate": 0.315,
+        "shuffled_rate": 0.1839,
+        "gap": 0.1311,
+        "chi2_stat": 167.3009,
+        "p_value": 0.0,
+        "significant_05": true,
+        "test": "mcnemar_continuity_corrected"
+      },
+      "layer2": {
+        "n_pairs": 3600,
+        "real_mean": 0.315,
+        "shuffled_mean": 0.1839,
+        "gap": 0.1311,
+        "mean_diff": 0.1311,
+        "t_stat": 13.2736,
+        "p_value": 0.0,
+        "significant_05": true,
+        "test": "paired_ttest"
+      },
+      "diagnostics": {
+        "n_base_chains": 1200,
+        "n_pairs_total": 3600,
+        "n_pairs_actionable": 3600,
+        "n_pairs_l2": 3600,
+        "missing_real": 0,
+        "missing_shuffled": 0
+      },
+      "layer1_actionable_bonferroni": {
+        "n_pairs": 3600,
+        "n11_concordant_both_match": 235,
+        "b_discordant_real_match": 899,
+        "c_discordant_shuffled_match": 427,
+        "n00_concordant_neither": 2039,
+        "real_rate": 0.315,
+        "shuffled_rate": 0.1839,
+        "gap": 0.1311,
+        "chi2_stat": 167.3009,
+        "p_value": 0.0,
+        "significant_05": true,
+        "test": "mcnemar_continuity_corrected",
+        "p_value_bonferroni": 0.0,
+        "bonferroni_divisor": 1,
+        "significant_bonferroni": true
+      },
+      "outcome_tier": "strong_positive"
+    }
+  },
+  "variance_study": {
+    "haiku::pokemon::T0.5_seed7919": {
+      "layer1": {
+        "n_pairs": 3600,
+        "n11_concordant_both_match": 211,
+        "b_discordant_real_match": 896,
+        "c_discordant_shuffled_match": 414,
+        "n00_concordant_neither": 2079,
+        "real_rate": 0.3075,
+        "shuffled_rate": 0.1736,
+        "gap": 0.1339,
+        "chi2_stat": 176.6115,
+        "p_value": 0.0,
+        "significant_05": true,
+        "test": "mcnemar_continuity_corrected"
+      },
+      "layer1_actionable": {
+        "n_pairs": 3600,
+        "n11_concordant_both_match": 211,
+        "b_discordant_real_match": 896,
+        "c_discordant_shuffled_match": 414,
+        "n00_concordant_neither": 2079,
+        "real_rate": 0.3075,
+        "shuffled_rate": 0.1736,
+        "gap": 0.1339,
+        "chi2_stat": 176.6115,
+        "p_value": 0.0,
+        "significant_05": true,
+        "test": "mcnemar_continuity_corrected"
+      },
+      "layer2": {
+        "n_pairs": 3600,
+        "real_mean": 0.3075,
+        "shuffled_mean": 0.1736,
+        "gap": 0.1339,
+        "mean_diff": 0.1339,
+        "t_stat": 13.6559,
+        "p_value": 0.0,
+        "significant_05": true,
+        "test": "paired_ttest"
+      },
+      "diagnostics": {
+        "n_base_chains": 1200,
+        "n_pairs_total": 3600,
+        "n_pairs_actionable": 3600,
+        "n_pairs_l2": 3600,
+        "missing_real": 0,
+        "missing_shuffled": 0
+      },
+      "note": "variance_study config \u2014 descriptive only; not in Bonferroni family per SPEC v1.1 Amendment 3"
+    },
+    "haiku::pokemon::T0.5_seed1337": {
+      "layer1": {
+        "n_pairs": 3600,
+        "n11_concordant_both_match": 233,
+        "b_discordant_real_match": 925,
+        "c_discordant_shuffled_match": 410,
+        "n00_concordant_neither": 2032,
+        "real_rate": 0.3217,
+        "shuffled_rate": 0.1786,
+        "gap": 0.1431,
+        "chi2_stat": 197.8996,
+        "p_value": 0.0,
+        "significant_05": true,
+        "test": "mcnemar_continuity_corrected"
+      },
+      "layer1_actionable": {
+        "n_pairs": 3600,
+        "n11_concordant_both_match": 233,
+        "b_discordant_real_match": 925,
+        "c_discordant_shuffled_match": 410,
+        "n00_concordant_neither": 2032,
+        "real_rate": 0.3217,
+        "shuffled_rate": 0.1786,
+        "gap": 0.1431,
+        "chi2_stat": 197.8996,
+        "p_value": 0.0,
+        "significant_05": true,
+        "test": "mcnemar_continuity_corrected"
+      },
+      "layer2": {
+        "n_pairs": 3600,
+        "real_mean": 0.3217,
+        "shuffled_mean": 0.1786,
+        "gap": 0.1431,
+        "mean_diff": 0.1431,
+        "t_stat": 14.4988,
+        "p_value": 0.0,
+        "significant_05": true,
+        "test": "paired_ttest"
+      },
+      "diagnostics": {
+        "n_base_chains": 1200,
+        "n_pairs_total": 3600,
+        "n_pairs_actionable": 3600,
+        "n_pairs_l2": 3600,
+        "missing_real": 0,
+        "missing_shuffled": 0
+      },
+      "note": "variance_study config \u2014 descriptive only; not in Bonferroni family per SPEC v1.1 Amendment 3"
+    }
+  }
+}

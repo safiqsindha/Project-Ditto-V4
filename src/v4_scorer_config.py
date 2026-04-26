@@ -245,9 +245,12 @@ def validate_output(scored: dict, pilot: bool = False) -> list[str]:
                 failures.append(f"{label}: missing '{field}' in layer1_actionable")
         if "p_value_bonferroni" not in l1a and "layer1_actionable_bonferroni" in cell:
             failures.append(f"{label}: missing 'p_value_bonferroni' in layer1_actionable_bonferroni")
+
+    # outcome_tier is set only on primary cells — v3 scorer intentionally
+    # omits it from variance_study (descriptive only, not in Bonferroni family).
+    for label, cell in primary.items():
         if "outcome_tier" not in cell:
             failures.append(f"{label}: missing 'outcome_tier'")
-
         tier = cell.get("outcome_tier")
         # SPEC.md tiers (4 only); v3's 'weak_mixed' is excluded — see _classify_outcome_tier_spec.
         valid_tiers = {"strong_positive", "moderate_positive", "null", "reversed"}

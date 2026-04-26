@@ -17,7 +17,7 @@ venv/
 results/raw/
 results/blinded/
 results/pilot_scored.json
-results/v4_scored.json
+# results/v4_scored.json is committed (Session 4 output per BUILD_PLAN §Session 4)
 
 # Chain mirror (large — MANIFEST.sha256 is committed instead)
 data/v1_chains_mirror/*.jsonl
