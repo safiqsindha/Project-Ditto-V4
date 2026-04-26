@@ -391,9 +391,62 @@ engineering corrections (not methodology changes — the SPEC's intent for
 shuffled chains and tier definitions was unchanged; the implementation
 was wrong).
 
+### Session 2 addendum 3 — SPEC_v1.1 Amendment 2 (phase_ prefix strip)
+
+After fixing the rendered-bug pilot, a third bug scan (Opus, focused on
+gap-affecting issues) found a systematic asymmetry in response formatting:
+
+- 22.0% of real responses (11/50) carried a `phase_` prefix (e.g.,
+  `phase_vs_unit_A`)
+- 8.0% of shuffled responses (12/150) carried the same prefix
+- v1 reference distribution stores bare names (`vs_unit_a`); v3.1-game
+  prompt example uses chess vocabulary (`phase_endgame`) — collision
+
+The asymmetry is exactly SPEC.md Risk 1 (prompt-vocabulary fixation).
+Lead author authorized Option B: add a v4-specific normalization adapter
+to strip leading `phase_` prefix from model responses, scoped to scoring
+only. This is documented as **SPEC_v1.1.md Amendment 2** with rationale
+and is implemented in `src/v4_scorer_config.py` (does NOT modify
+`vendor/v3/`). The reference build path is unaffected (v1 references are
+already bare names).
+
+**Re-pilot results with Amendment 2 applied:**
+
+| | Before strip | After strip |
+|---|---|---|
+| real_rate | 0.2143 | 0.2429 |
+| shuffled_rate | 0.1857 | 0.1929 |
+| **gap** | **+0.0286** | **+0.0500** |
+| p_value | 0.665 | 0.391 |
+| tier | null | null |
+
+Gap now sits at the moderate-positive threshold (0.05). Tier is still
+`null` because p=0.391 doesn't clear 0.05 at n=140; the full 1,200-chain
+run will have ~3,600 actionable pairs (~25× more power) to determine
+whether the gap clears p<0.05 at the moderate threshold.
+
+The +0.0214 gap shift matches the prior simulation prediction (+0.020 to
++0.030) and is asymmetric as expected: real_rate gained 1 match per ~3.5
+chains affected, shuffled_rate gained almost nothing (none of the 12
+shuffled `phase_X` responses had a bare-name match in their bucket's
+top-3, consistent with shuffling diffusing the model's confidence).
+
+### Files modified (addendum 3)
+
+| File | Status |
+|---|---|
+| `SPEC_v1.1.md` | Amendment 2 added (lead author signed; co-author pending) |
+| `src/v4_scorer_config.py` | `_make_normalize_with_phase_strip` adapter |
+| `results/pilot_scored.json` | regenerated |
+
+### Final Gate 2 status: **PASS**
+
+All 6 criteria pass. Gate 2 result reflects the pipeline as it will run
+in Session 3, including Amendments 1 and 2.
+
 ### Next session (Session 3) planned tasks
 
-*(After co-author sign-off on SPEC_v1.1 Amendment 1.)*
+*(After co-author sign-off on SPEC_v1.1 Amendments 1 and 2.)*
 
 1. Confirm Gate 3 pre-flight: pilot approved, chain selection unchanged
 2. Build full reference distribution (1,200 chains) at `vs_unit_a` default

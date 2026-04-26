@@ -104,4 +104,101 @@ analysis. Including it is the correct domain adaptation.
 
 ---
 
+## Amendment 2: `phase_` prefix strip in response normalization
+
+### What changed
+
+v3's `normalize_action` (in `vendor/v3/src/normalize.py`) is documented as
+"domain-blind" — it lowercases, strips whitespace, and removes punctuation,
+but does no entity-class prefix handling. SPEC.md applies v3's methodology
+unchanged, so v4 inherits this normalization.
+
+This amendment adds a v4-specific normalization adapter that strips a
+leading `phase_` prefix from model responses *during scoring only*. The
+adapter is implemented in `src/v4_scorer_config.py` via the same
+monkey-patch pattern used for `extract_state_signature` and
+`classify_outcome_tier`. It does NOT modify `vendor/v3/`.
+
+```
+normalize_v4(s):
+    out = v3_normalize_action(s)
+    if out.startswith("phase_"):
+        out = out[len("phase_"):]
+    return out
+```
+
+The reference distribution build is unaffected: v1 chains do not have
+entities natively prefixed with `phase_` (SubGoalTransition `to_phase`
+values are bare names like `vs_unit_a`, `forced_switch_required`), so
+`extract_entity_from_constraint` already produces bare names. The
+asymmetry exists only on the response side, where the v3.1-game prompt's
+chess-flavored example token (`phase_endgame`) induces `phase_X` outputs.
+
+### Trigger
+
+Session 2 bug scan (Opus) and direct simulation found:
+- 22.0% of real responses (11/50) carried a `phase_` prefix
+- 8.0% of shuffled responses (12/150) carried a `phase_` prefix
+
+The asymmetry arises because real chains preserve coherent phase signal,
+making the model more likely to emit a phase-style answer. Without the
+strip, all 11 real `phase_X` responses miss against the reference (which
+stores bare names); the model's correct intent is being scored as a miss.
+
+Pilot impact (50-chain re-score with the patch): real_rate 0.20 → 0.22,
+shuffled_rate unchanged at 0.173, gap +0.0267 → +0.0467.
+
+### Rationale for the amendment
+
+SPEC.md §"Risk 1: Prompt-vocabulary fixation" pre-registered the risk
+that v3.1-game's chess-flavored prompt examples could induce v3-style
+output formats on v1 data. The amendment does **not** change the prompt
+or the methodology's match-counting rule conceptually — it adds a thin
+adapter that recovers the model's clear intent (`phase_vs_unit_a` was
+"a phase prediction of `vs_unit_a`") in the v1 entity space.
+
+Without the adapter, the experiment systematically discounts a class of
+correct predictions by an artifact of cross-domain prompt vocabulary.
+With the adapter, scoring measures whether v3's methodology can
+distinguish real from shuffled v1 chains under the v3.1-game prompt,
+without an unnecessary penalty for prompt-induced format mismatch.
+
+The adapter is conservative:
+- Stripped only when the leading prefix is exactly `phase_`
+- Applied after v3's existing `normalize_action`
+- No reference-build-side change required (v1 references are already
+  bare names)
+- v3 source is not modified; the patch lives in `v4_scorer_config.py`
+
+### Impact on pre-registered analysis
+
+1. **Match counting**: real responses with `phase_` prefix are now
+   eligible for matches against bare-name references. Effect is
+   asymmetric (favors real_rate) because the prompt-vocabulary fixation
+   itself is asymmetric.
+2. **Reference distribution**: unchanged. Build path unaffected.
+3. **Outcome interpretation thresholds**: unchanged.
+4. **Bonferroni divisor**: unchanged.
+5. **All other SPEC.md commitments remain in force.**
+
+### Implementation
+
+- `src/v4_scorer_config.py`: `_normalize_action_spec` adapter; monkey-
+  patches `_v3_normalize.normalize_action` in `score_v4()` and restores
+  in `finally`.
+- `vendor/v3/src/normalize.py`: not modified.
+- `data/reference_v4_pokemon_pilot.pkl`: not regenerated (reference
+  builds use `extract_entity_from_constraint` directly, which is
+  unchanged).
+- Pilot re-scored with the adapter to verify behavior.
+
+### Sign-off
+
+| Author | Role | Date | Signature |
+|---|---|---|---|
+| Safiq Sindha | Lead author | 2026-04-26 | ✓ approved |
+| Myriam | Co-author | — | pending |
+
+---
+
 *SPEC_v1.1.md — 2026-04-26. Supplements SPEC.md v1.0; does not modify SPEC.md.*
