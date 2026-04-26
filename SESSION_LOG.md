@@ -391,6 +391,40 @@ engineering corrections (not methodology changes — the SPEC's intent for
 shuffled chains and tier definitions was unchanged; the implementation
 was wrong).
 
+### Session 2 addendum 4 — Shuffler fixed-point investigation (no fix needed)
+
+A fourth bug scan (Opus) flagged a structural issue: `random.Random(42).shuffle(list(range(40)))[20] == 20`. For 1,063 of 1,200 selected chains (88.6%, all length=40 with cutoff_k=20), the seed-42 "shuffle" leaves position 20 unchanged. Since the v1 pre-generated shuffled chains use the same seeded RNG, `shuf.constraints[cutoff_k] == real.constraints[cutoff_k]` (modulo timestamp) for ~30% of all real-vs-shuffled pairs in the study (1,070 of 3,600 across all 3 seeds — seed 7919 also FPs at len=20, cutoff_k=10 for ~3 chains).
+
+A fix script (`scripts/fix_shuffler_fp.py`) was implemented to swap `constraints[cutoff_k]` with `constraints[cutoff_k+1]` (with timestamp adjustment to preserve monotonicity) plus a corresponding swap of body lines in the rendered text. Applied to all 1,070 affected chains.
+
+**Empirical result: pilot gap stayed at +0.05, p=0.391 — fix had no measurable impact.**
+
+Mechanistic investigation showed why: v3's `score_layer1` computes the state-sig from `constraints[:cutoff_k]` (the prefix) and looks up the reference top-k for that bucket. The model's prompt is also the prefix. The constraint at `constraints[cutoff_k]` is only used at REFERENCE BUILD time as `focal_action`, and the reference is built from real chains only — so the FP at the shuffled chain's `cutoff_k` never pollutes the reference. The earlier per-seed match-rate variance (seed 42=0.21, 1337=0.15, 7919=0.20) was statistical noise at n~50, not a structural bias.
+
+The fix was reverted: 1,070 modified files were restored to v1-pregen symlinks; `scripts/fix_shuffler_fp.py` was removed; no SPEC amendment was needed because no methodology change was made. The pilot gap remains 0.05.
+
+This investigation is recorded for transparency: the FP at cutoff_k is a real property of the seeded RNG, but it does not affect the layer1_actionable measurement. If Approach 3 (regenerate shuffled prefixes with a different seed) had been chosen, the prefix would change and the gap would shift — but that is a methodology change deferred until/unless other findings warrant it.
+
+### Final Gate 2 status: **PASS** (post-investigation)
+
+| Criterion | Status | Details |
+|---|---|---|
+| 50 chains load, no schema errors | PASS | All 50 loaded cleanly |
+| Reference distribution ≥ 90% coverage | PASS | 1.000 at vs_unit_a default |
+| 200 batch calls succeed | PASS | 200/200, 0 errors |
+| Responses parse; non-zero match rate | PASS | real_rate=0.236, shuf_rate=0.186 |
+| Both-actionable retention ≥ 50% | PASS | 100% (140/140) with 6-type set |
+| Pilot scoring produces valid JSON | PASS | results/pilot_scored.json well-formed |
+
+**Final pilot effect (post Amendments 1 & 2, with all bugs fixed and FP investigation reverted):**
+
+```
+Layer 1 actionable: gap=+0.0500, p=0.391, n=140, tier=null
+Layer 2 continuous: gap=+0.0467, p=0.319, n=150
+```
+
+The full 1,200-chain run (Session 3) provides ~25× the actionable pairs and will determine whether the +0.05 effect clears p<0.05 at the moderate-positive threshold.
+
 ### Session 2 addendum 3 — SPEC_v1.1 Amendment 2 (phase_ prefix strip)
 
 After fixing the rendered-bug pilot, a third bug scan (Opus, focused on
