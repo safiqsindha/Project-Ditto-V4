@@ -704,3 +704,99 @@ log: "Recorded for SPEC compliance audit."
    Analyses): per-config variance, constraint-type carrier, comparison to v1
    published numbers, pair-level disagreement, backoff-level distribution
 5. Send draft to Myriam for co-author review (Gate 5)
+
+---
+
+## Session 5 — 2026-04-26
+
+**Purpose:** RESULTS.md write-up — BUILD_PLAN §Session 5
+
+### Tasks completed
+
+1. **Pre-session reads.** Read SPEC.md, SPEC_v1.1.md, CLAUDE.md, BUILD_PLAN.md
+   §Session 5 / §Gate 5, all SESSION_LOG entries (Sessions 1–4), and
+   results/v4_scored.json. Read comparison sources:
+   - v1 CORRECTED_SCORING.md (Haiku corrected gap 0.066, Sonnet 0.206)
+   - v3 results/phase1_v31_scored_full.json (all four cell gaps)
+
+2. **Carrier analysis computed.** Ran per-constraint-type carrier analysis
+   on primary config raw results. Loaded real and shuffled chains; computed
+   per-real-type real_rate, shuffled_rate, gap:
+
+   | Type | n | gap |
+   |---|---|---|
+   | ResourceBudget | 1,953 | +0.1147 |
+   | ToolAvailability | 858 | +0.1002 |
+   | SubGoalTransition | 339 | +0.2242 |
+   | InformationState | 243 | +0.4115 |
+   | OptimizationCriterion | 132 | −0.0606 |
+   | CoordinationDependency | 75 | −0.0800 |
+
+   InformationState shows the strongest per-type gap; ResourceBudget dominates
+   by volume (54.3% of pairs). Both of the negative types are low-volume
+   (<6% combined); the overall gap is positive across all high-volume types.
+
+3. **Drafted RESULTS.md.** Full document per BUILD_PLAN §Session 5 structure:
+   Status, Abstract, Hypothesis (quoted from SPEC.md), Pre-registered Success
+   Criteria, Methods (data, evaluation, statistical methodology, two v1-domain
+   adaptations), Results (primary cell, Layer 2, variance study), Supplementary
+   Analyses (all 5 pre-registered), Discussion, Limits, Authors.
+
+   Gate 5 structural completeness check:
+
+   | Criterion | Status |
+   |---|---|
+   | Status section with pre-registration link, scoring link, authors, date | PASS |
+   | Abstract | PASS |
+   | Hypothesis quoted from SPEC.md | PASS |
+   | Pre-registered Success Criteria quoted | PASS |
+   | Methods: data, methodology, v1-domain adaptations, scoring | PASS |
+   | Results: threshold check, primary outcome tier, variance study | PASS |
+   | Supplementary 1: per-config variance | PASS |
+   | Supplementary 2: constraint-type carrier analysis | PASS |
+   | Supplementary 3: comparison to v1 published numbers | PASS |
+   | Supplementary 4: pair-level disagreement analysis | PASS |
+   | Supplementary 5: backoff-level distribution | PASS |
+   | Discussion: what established vs NOT established | PASS |
+   | Limits: interpretation framework + 4 technical disclosures | PASS |
+   | Authors and Acknowledgements | PASS |
+   | Pre-registered threshold classification (no post-hoc reclassification) | PASS |
+   | Technical risks disclosed (Risk 1 / McNemar / shuffler) | PASS |
+
+### Gate 5 status: **PASS** (structural completeness)
+
+All 15 Gate 5 criteria met. RESULTS.md is complete for co-author review.
+
+### Key findings in RESULTS.md
+
+- **Primary outcome: strong_positive** (gap=+0.1311, p≈0, tier confirmed)
+- Layer 2 gap = Layer 1 gap (all matched responses are legality=1; composite reduces to match indicator)
+- Variance configs replicate: T0.5/1337 gap=+0.143, T0.5/7919 gap=+0.134
+- McNemar b:c ratio = 2.11:1 (vs v3 cells: b:c = 0.04–0.42, all < 1)
+- InformationState strongest carrier (+0.41 gap at n=243); ResourceBudget dominant volume carrier
+- Comparison to v1 Haiku (0.066): v4 gap ~2× larger; 4 methodological differences preclude direct comparison
+- Comparison to v3 cells: v4 gap is +0.13 vs v3 range −0.115 to −0.231
+
+### Files created or modified
+
+| File | Status |
+|---|---|
+| `RESULTS.md` | new (initial draft — pending co-author review) |
+| `SESSION_LOG.md` | this entry |
+
+### Blockers or open questions
+
+- Co-author (Myriam) review of RESULTS.md required before final commit.
+- No technical blockers; RESULTS.md is structurally complete.
+- One note for co-author attention: SPEC.md §Supplementary 3 mentions
+  "Comparison to v1 published numbers" acknowledging the focal_action
+  computation difference (SPEC §Risk 4). This is disclosed in §Supplementary 3.
+  Co-author should verify the disclosure is adequate.
+
+### Next session (Session 6) planned tasks
+
+1. Co-author (Myriam) reviews RESULTS.md draft
+2. Incorporate co-author feedback
+3. Both-author sign-off on RESULTS.md
+4. Final commit and tag: `v4-results-final-{date}`
+5. Update RESULTS.md status from "DRAFT" to "FINAL — both authors approved"
